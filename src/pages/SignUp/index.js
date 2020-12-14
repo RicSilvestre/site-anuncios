@@ -7,23 +7,43 @@ import {doLogin} from '../../helpers/AuthHandler'
 const Page = () => {
     const api = useApi()
 
+    const [name, setName] = React.useState('')
+    const [stateLoc, setStateLoc] = React.useState('')
     const [email, setEmail] = React.useState('')
     const [password, setPassword] = React.useState('')
-    const [rememberPass, setRememberPass] = React.useState(false)
+    const [confirmPass, setConfirmPass] = React.useState('')
+
+    const [stateList, setStateList] = React.useState([])
+
+
     const [disabled, setDisabled] = React.useState(false)
     const [error, setError] = React.useState('')
+
+    React.useEffect(() => {
+        const getStates = async () => {
+            const slist = await api.getStates();
+            setStateList(slist)
+        }
+        getStates()    
+    }, [])
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setDisabled(true);
-        setError('')
+        setError('');
 
-        const json = await api.login(email, password)
+        if (password !== confirmPass) {
+            setError('Senhas não batem')
+            setDisabled(false)
+            return;
+        }
+
+        const json = await api.register(name, password, email, stateLoc)
 
         if (json.error) {
             setError(json.error)
         } else {
-            doLogin(json.token, rememberPass);
+            doLogin(json.token);
             window.location.href = '/'
         }
 
@@ -34,10 +54,26 @@ const Page = () => {
     return (
         <div>
             <PageContainer>
-                <PageTitle>Login</PageTitle>
+                <PageTitle>Cadastro</PageTitle>
                 <PageArea>
                     {error && <ErrorMessage>{error}</ErrorMessage> }
                     <form onSubmit={handleSubmit}>
+                        <label className="area">
+                            <div className="area-title">Nome Completo</div>
+                            <div className="area-input">
+                                <input type="text" disabled={disabled} value={name} onChange={e => setName(e.target.value)} required/>
+                            </div>
+                        </label>
+                        <label className="area">
+                            <div className="area-title">Estado</div>
+                            <div className="area-input">
+                                <select value={stateLoc} onChange={e => setStateLoc(e.target.value)} required>
+                                    <option></option>
+                                    {stateList.map((i, key) => <option key={key} value={i._id}>{i.name}</option>
+                                    )}
+                                </select>
+                            </div>
+                        </label>
                         <label className="area">
                             <div className="area-title">E-mail</div>
                             <div className="area-input">
@@ -51,15 +87,15 @@ const Page = () => {
                             </div>
                         </label>
                         <label className="area">
-                            <div className="area-title">Lembrar Senha</div>
+                            <div className="area-title">Confirmar Senha</div>
                             <div className="area-input">
-                                <input type="checkbox" disabled={disabled} checked={rememberPass} onChange={() => setRememberPass(!rememberPass)}/>
+                                <input type="password" disabled={disabled} value={confirmPass} onChange={e => setConfirmPass(e.target.value)} required/>
                             </div>
-                        </label>
+                        </label>                        
                         <label className="area">
                             <div className="area-title"></div>
                             <div className="area-input">
-                                <button>Fazer Login</button>
+                                <button>Fazer Cadastro</button>
                             </div>
                         </label>
                     </form>
